@@ -13,19 +13,21 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const jspre = "treebeard"
 
 type (
 	Node struct {
-		Id       string  `json:"_"`
-		ParentId string  `json:"_"`
-		Name     string  `json:"name"`
-		Toggled  bool    `json:"toggled,omitempty"`
-		Loading  bool    `json:"loading,omitempty"`
-		Active   bool    `json:"active"`
-		Children []*Node `json:"children,omitempty"`
+		Id       string   `json:"_"`
+		ParentId string   `json:"_"`
+		Name     string   `json:"name"`
+		Toggled  bool     `json:"toggled,omitempty"`
+		Active   bool     `json:"active"`
+		Path     []string `json:"path,omitempty"`
+		Isdir    bool     `json:"isdir,omitempty"`
+		Children []*Node  `json:"children,omitempty"`
 	}
 )
 
@@ -53,6 +55,11 @@ func (this *Node) Add(nodes ...*Node) bool {
 	return this.Size() == size+len(nodes)
 }
 
+// pathList ...
+func pathList(path string) []string {
+	return strings.Split(path, string(filepath.Separator))
+}
+
 // DirWalk ...
 func DirWalk(root string) (*Node, []*Node, error) {
 	parents := make(map[string]int)
@@ -71,11 +78,11 @@ func DirWalk(root string) (*Node, []*Node, error) {
 			if node_id == parent_id {
 				parent_id = "#"
 			}
-			// log.Printf("id: %s, parent: %s, text: %s\n", node_id, parent_id, info.Name())
+			// log.Printf("id: %s, parent: %s, text: %s, path: %s\n", node_id, parent_id, info.Name(), path)
 			if idx == 0 {
-				rootNode = &Node{Id: node_id, ParentId: parent_id, Name: info.Name(), Toggled: true, Active: true, Children: nil}
+				rootNode = &Node{Id: node_id, ParentId: parent_id, Name: info.Name(), Toggled: true, Active: false, Children: nil}
 			} else {
-				jstree = append(jstree, &Node{Id: node_id, ParentId: parent_id, Name: info.Name(), Active: false, Children: nil})
+				jstree = append(jstree, &Node{Id: node_id, ParentId: parent_id, Name: info.Name(), Path: pathList(path), Isdir: info.IsDir(), Active: false, Children: nil})
 			}
 		}
 		idx += 1
